@@ -1,9 +1,10 @@
 import pytesseract
 from PIL import Image
-
+import re
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QVBoxLayout, QWidget, QTextEdit
 from PyQt5 import QtCore
+from hanspell import spell_checker
 
 class ImagePathViewer(QMainWindow):
     def __init__(self):
@@ -55,9 +56,27 @@ class ImagePathViewer(QMainWindow):
         custom_config = r'--oem 3 --psm 6 -l kor'  # OCR configuration with Korean language
         text = pytesseract.image_to_string(image, config=custom_config)
 
-        # Print the recognized text
-        self.text_edit.setText(text)
-        print(text)
+        # 한글만 추출
+        text = re.sub('[^가-힣\s]', '', text)
+        text = text.replace(" ", "")
+
+        # # 맞춤법 검사 진행
+
+        lines = text.splitlines()
+
+        # Perform spell checking on each line
+        corrected_lines = []
+        for line in lines:
+            spelled_line = spell_checker.check(line)
+            corrected_lines.append(spelled_line.checked)
+
+        # Join the corrected lines back into a single string
+        corrected_text = '\n'.join(corrected_lines)
+
+        print(corrected_text)
+
+        # 텍스트 프린트
+        self.text_edit.setText(corrected_text)
 
 
 if __name__ == '__main__':
